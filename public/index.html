@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloody Rain Footage</title>
-    <!-- Подключаем оригинальную библиотеку анимации p5.js -->
+    <title>Bloody Rain & Sparks Footage</title>
+    <!-- Подключаем правильную и рабочую библиотеку анимации p5.js -->
     <script src="https://cloudflare.com"></script>
     <style>
         * {
@@ -16,9 +16,8 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #0b0202; /* Оригинальный темно-бордовый оттенок фона */
+            background-color: #0b0202; /* Фирменный темно-бордовый фон */
         }
-        /* Закрепляем холст p5.js на весь экран */
         canvas {
             display: block;
             position: fixed;
@@ -33,12 +32,11 @@
 <body>
 
     <script>
-        // Восстановленные оригинальные массивы элементов
         let drops = [];
         let sparks = [];
         let smogParticles = [];
         
-        // Автоматические параметры окружающей среды
+        // Параметры ветра и скорости
         let windX = 0; 
         let targetWindX = 0;
         let globalSpeedMultiplier = 1.2;
@@ -46,68 +44,69 @@
         function setup() {
             createCanvas(windowWidth, windowHeight);
             
-            // Инициализация оригинального количества элементов
+            // Создаем элементы: 120 капель, 50 ярких искр и 15 облаков тумана
             for (let i = 0; i < 120; i++) drops.push(new Drop());
-            for (let i = 0; i < 40; i++) sparks.push(new Spark());
+            for (let i = 0; i < 50; i++) sparks.push(new Spark());
             for (let i = 0; i < 15; i++) smogParticles.push(new Smog());
 
-            // Запуск автоматического изменения ритма погоды каждую минуту (60000 мс)
+            // Запуск автоматического изменения ритма ровно каждую минуту (60000 мс)
             setInterval(updateWeatherRhythm, 60000);
-            updateWeatherRhythm(); // Задаем начальный хаотичный ритм
+            updateWeatherRhythm(); 
         }
 
         function draw() {
-            // Оригинальный шлейф размытия фона
+            // Красивый шлейф размытия (эффект темноты)
             background(11, 2, 2, 40);
 
-            // Плавное изменение направления ветра
-            windX = lerp(windX, targetWindX, 0.02);
+            // Плавный переход ветра к новому значению
+            windX = lerp(windX, targetWindX, 0.015);
 
-            // Отрисовка всех слоев спецэффектов сайта
+            // Рисуем все слои эффектов
             smogParticles.forEach(p => { p.update(); p.display(); });
             drops.forEach(d => { d.update(); d.display(); });
             sparks.forEach(s => { s.update(); s.display(); });
         }
 
-        // Автоматический алгоритм хаотичного изменения ритма
+        // Функция, которая создает тысячи комбинаций бури каждую минуту
         function updateWeatherRhythm() {
-            // Хаотично меняем силу и сторону ветра (от -2.5 до 2.5)
-            targetWindX = random(-2.5, 2.5);
+            // Случайный ветер: может дуть сильно влево (-3.5) или сильно вправо (3.5)
+            targetWindX = random(-3.5, 3.5);
             
-            // Хаотично меняем скорость течения дождя
-            globalSpeedMultiplier = random(0.8, 2.0);
+            // Случайная скорость дождя и искр: от ленивого течения до бешеного шторма
+            globalSpeedMultiplier = random(0.6, 2.3);
         }
 
-        // Оригинальный класс Капли (Drop)
+        // Класс Кровавого Дождя
         class Drop {
             constructor() {
                 this.reset();
                 this.y = random(height);
             }
             reset() {
-                this.x = random(-100, width + 100);
+                this.x = random(-150, width + 150);
                 this.y = random(-100, -10);
                 this.z = random(0, 20);
-                this.len = map(this.z, 0, 20, 10, 25);
-                this.yspeed = map(this.z, 0, 20, 4, 9) * globalSpeedMultiplier;
-                this.opacity = map(this.z, 0, 20, 30, 120);
-                this.weight = map(this.z, 0, 20, 1, 2.5);
+                this.len = map(this.z, 0, 20, 12, 28);
+                this.yspeed = map(this.z, 0, 20, 4, 10) * globalSpeedMultiplier;
+                this.opacity = map(this.z, 0, 20, 40, 140);
+                this.weight = map(this.z, 0, 20, 1.2, 2.8);
             }
             update() {
                 this.y += this.yspeed;
-                this.x += windX * map(this.z, 0, 20, 0.5, 1.5);
-                if (this.y > height || this.x < -100 || this.x > width + 100) {
+                this.x += windX * map(this.z, 0, 20, 0.6, 1.6);
+                if (this.y > height || this.x < -150 || this.x > width + 150) {
                     this.reset();
                 }
             }
             display() {
-                stroke(180, 20, 20, this.opacity); // Кроваво-красные капли
+                stroke(190, 20, 20, this.opacity);
                 strokeWeight(this.weight);
-                line(this.x, this.y, this.x + windX * 2, this.y + this.len);
+                // Наклон капли идеально зависит от текущего ветра windX
+                line(this.x, this.y, this.x + windX * 2.5, this.y + this.len);
             }
         }
 
-        // Улучшенный класс Искры (Spark) с яркой реакцией на ветер
+        // Класс Крупных Искр и Пепла (летят снизу вверх и сносятся ветром)
         class Spark {
             constructor() {
                 this.reset();
@@ -116,29 +115,29 @@
             reset() {
                 this.x = random(width);
                 this.y = height + random(10, 100);
-                this.size = random(4, 8); // Сделали искры крупнее (было 2-5)
+                this.size = random(4, 9); // Крупный размер для комфорта глаз
                 this.speedX = random(-1.5, 1.5);
-                this.speedY = random(-2, -5); // Летят чуть быстрее вверх
-                this.alpha = random(150, 255); // Сделали их ярче и насыщеннее
+                this.speedY = random(-1.5, -4.5) * globalSpeedMultiplier; // Скорость зависит от ритма
+                this.alpha = random(160, 255); // Высокая яркость
             }
             update() {
                 this.y += this.speedY;
-                // Усилили влияние ветра (теперь они сильно наклоняются вбок вслед за дождем)
-                this.x += this.speedX + windX * 1.2; 
-                this.alpha -= 1.2; // Живут на экране чуть дольше
-                if (this.alpha <= 0 || this.y < -10) {
+                // Искры теперь СИЛЬНО реагируют на ветер дождя и летят по диагонали
+                this.x += this.speedX + windX * 1.4; 
+                this.alpha -= 1.0; 
+                if (this.alpha <= 0 || this.y < -10 || this.x < -50 || this.x > width + 50) {
                     this.reset();
                 }
             }
             display() {
                 noStroke();
-                // Насыщенный светящийся огненно-красный цвет
-                fill(255, 50, 50, this.alpha); 
+                // Насыщенный светящийся огненно-красный пепел
+                fill(255, 55, 55, this.alpha);
                 ellipse(this.x, this.y, this.size);
             }
         }
 
-        // Оригинальный класс Кровавого Тумана (Smog)
+        // Класс Объемного Красного Смога/Тумана на заднем фоне
         class Smog {
             constructor() {
                 this.reset();
@@ -146,21 +145,21 @@
                 this.y = random(height);
             }
             reset() {
-                this.x = windX > 0 ? random(-200, 0) : random(width, width + 200);
+                this.x = windX > 0 ? random(-250, 0) : random(width, width + 250);
                 this.y = random(height);
-                this.size = random(150, 350);
-                this.speedX = random(0.2, 0.8) * (windX >= 0 ? 1 : -1);
-                this.alpha = random(5, 18);
+                this.size = random(180, 380);
+                this.speedX = random(0.2, 0.7) * (windX >= 0 ? 1 : -1);
+                this.alpha = random(6, 20);
             }
             update() {
-                this.x += this.speedX + windX * 0.3;
-                if (this.x > width + 200 || this.x < -200) {
+                this.x += this.speedX + windX * 0.4;
+                if (this.x > width + 250 || this.x < -250) {
                     this.reset();
                 }
             }
             display() {
                 noStroke();
-                fill(139, 0, 0, this.alpha); // Объёмные частицы тумана
+                fill(120, 0, 0, this.alpha);
                 ellipse(this.x, this.y, this.size);
             }
         }
@@ -171,4 +170,5 @@
     </script>
 </body>
 </html>
+
 
