@@ -1,253 +1,134 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>RED RAID</title>
-
-
-
-  <!-- Стили сайта (CSS) -->
-  <style>
-    body {
-      background-color: #121212; /* Наш темный фон */
-      color: #e0e0e0;
-      font-weight: bold;
-      font-size: 20px;
-      font-family: sans-serif;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      box-sizing: border-box;
-      position: relative;
-    }
-   
-    .modal-overlay img {
-      max-width: 90%;
-      max-height: 90%;
-      border: 2px solid #ff3333; /* Наша фирменная красная рамка */
-      box-shadow: 0 0 30px rgba(255, 51, 51, 0.5);
-      border-radius: 8px;
-      animation: zoomIn 0.25s ease-out; /* Плавное появление из центра */
-    }
-
-    @keyframes zoomIn {
-      from { transform: scale(0.8); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-
-    .screenshot-item {
-      position: relative;
-      overflow: hidden;
-      border-radius: 6px;
-      border: 2px solid #222 !important; /* Темная рамка в покое */
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      aspect-ratio: 16 / 9;
-    }
-
-    .screenshot-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s ease;
-      filter: grayscale(40%) brightness(75%) contrast(110%) !important; /* Мрачный игровой контраст */
-    }
-
-   
-    .screenshot-item:hover img {
-      transform: scale(1.08);
-      filter: grayscale(0%) brightness(105%) contrast(100%) !important; /* Проявление цвета */
-    }
-
-
-    /* ХОЛСТ ДЛЯ КРОВАВОГО ДОЖДЯ */
-    #rainCanvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1; /* Сидит строго ПЕРЕД видео, но ЗА текстом */
-      pointer-events: none; /* Мышка кликает сквозь дождь */
-    }
-
-    /* Правило для шляпы: центрируем всё содержимое */
-    header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 30px 0;
-    }
-
-    /* Контраст 150% + четырехсторонний черный барьер, который полностью съедает белые точки */
-    @keyframes neonPulse {
-      0% {
-        filter: contrast(150%) brightness(90%)
-        drop-shadow(1px 1px 1px #000)
-        drop-shadow(-1px -1px 1px #000)
-        drop-shadow(1px -1px 1px #000)
-        drop-shadow(-1px 1px 1px #000)
-        drop-shadow(0 0 15px rgba(255, 51, 51, 0.4));
-      }
-      50% {
-        filter: contrast(150%) brightness(90%)
-        drop-shadow(1px 1px 1px #000)
-        drop-shadow(-1px -1px 1px #000)
-        drop-shadow(1px -1px 1px #000)
-        drop-shadow(-1px 1px 1px #000)
-        drop-shadow(0 0 40px rgba(255, 51, 51, 0.95));
-      }
-      100% {
-        filter: contrast(150%) brightness(90%)
-        drop-shadow(1px 1px 1px #000)
-        drop-shadow(-1px -1px 1px #000)
-        drop-shadow(1px -1px 1px #000)
-        drop-shadow(-1px 1px 1px #000)
-        drop-shadow(0 0 15px rgba(255, 51, 51, 0.4));
-      }
-    }
-
-    h1 {
-      color: #ff3333;
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(255, 51, 51, 0.5); /* Небольшой отсвет для текста */
-    }
-
-    header p {
-      margin: 10px 0 0 0;
-      font-size: 18px;
-      color: #a0a0a0;
-    }
-
-    header b {
-      color: #ff3333;
-    }
-
-    /* Полупрозрачный контейнер для разделов сайта */
-    main {
-      flex-grow: 1;
-      max-width: 600px;
-      width: 100%;
-      margin: 20px auto;
-    }
-
-    /* Стиль для карточек-разделов */
-    section {
-      background: rgba(22, 22, 26, 0.85); /* Чуть плотнее, чтобы дождь не мешал читать */
-      backdrop-filter: blur(5px); /* Размытие видео позади карточки */
-      border: 1px solid rgba(255, 51, 51, 0.15); /* Едва заметная красная рамка */
-      padding: 25px;
-      border-radius: 15px;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    }
-
-    section h2 {
-      color: #ff3333;
-      margin-top: 0;
-      font-size: 22px;
-      border-bottom: 1px solid rgba(255, 51, 51, 0.3);
-      padding-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .bg-video {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -2;
-      opacity: 0.25;
-
-<!-- Холст для капель дождя -->
-<canvas id="rainCanvas"></canvas>
-
-<header>
-  <img src="./public/red_raid-removebg-preview.png" alt="Логотип RED RAID">
-  <h1>PLAYER KILLER сообщество</h1>
-  <p>СВОБОДА <b>«АБСТРАКЦИЯ»</b> Романтика</p>
-</header>
-<!-- СКРИПТ ДЛЯ КРОВАВОГО ДОЖДЯ -->
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('rainCanvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    const maxDrops = 60;
-    const drops = [];
-
-    for (let i = 0; i < maxDrops; i++) {
-      drops.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        length: Math.random() * 15 + 10,
-        speed: Math.random() * 4 + 3
-      });
-    }
-
-    function drawRain() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = 'rgba(204, 0, 0, 0.45)';
-      ctx.lineWidth = 1.8;
-      ctx.lineCap = 'round';
-
-      for (let i = 0; i < maxDrops; i++) {
-        const d = drops[i];
-        ctx.beginPath();
-        ctx.moveTo(d.x, d.y);
-        ctx.lineTo(d.x, d.y + d.length);
-        ctx.stroke();
-
-        d.y += d.speed;
-
-        if (d.y > canvas.height) {
-          d.y = -d.length;
-          d.x = Math.random() * canvas.width;
-          d.speed = Math.random() * 4 + 3;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloody Rain Footage</title>
+    <style>
+        /* Очищаем страницу и делаем фон полностью чёрным */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-      requestAnimationFrame(drawRain);
-    }
-    drawRain();
-    // ЛОГИКА ОТКРЫТИЯ КАРТИНОК ПО КЛИКУ
-    const modal = document.getElementById('imageModal');
-    const modalImg = modal.querySelector('img');
-    const items = document.querySelectorAll('.screenshot-grid .screenshot-item img');
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+        /* Растягиваем холст с дождем на абсолютно весь экран */
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
 
-    // Клик по любой картинке в галерее
-    items.forEach(img => {
-      img.parentElement.addEventListener('click', () => {
-        modal.style.display = 'flex';
-        modalImg.src = img.src; // Перекидываем путь картинки в модалку
-      });
-    });
+    <!-- Только холст для анимации, никакого лишнего HTML-текста -->
+    <canvas id="rainCanvas"></canvas>
 
-    // Клик в любое место черного экрана закрывает его обратно
-    modal.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-  });
-</script>
-<!-- Контейнер для полноэкранного просмотра -->
-<div id="imageModal" class="modal-overlay"><img></div>
+    <script>
+        const canvas = document.getElementById('rainCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Базовые настройки капель (вытащены из вашего оригинального JS)
+        const drops = [];
+        const maxDrops = 150; 
+
+        // Переменные динамики окружающей среды
+        let wind = 1.5;         // Скорость ветра по умолчанию
+        let globalSpeed = 4;    // Базовая скорость течения дождя
+        let rhythmInterval = 60000; // Интервал хаотичного изменения ритма (1 минута)
+
+        class Drop {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * canvas.height; // Случайный старт по высоте при первой загрузке
+            }
+
+            reset() {
+                this.x = Math.random() * (canvas.width + 200) - 100;
+                this.y = -20;
+                this.length = Math.random() * 20 + 15;
+                this.speed = Math.random() * 4 + globalSpeed;
+                this.opacity = Math.random() * 0.4 + 0.2;
+            }
+
+            update() {
+                this.y += this.speed;
+                this.x += wind; // Ветер смещает каплю по горизонтали
+
+                if (this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(255, 0, 0, ${this.opacity})`; // Фирменный кроваво-красный цвет
+                ctx.lineWidth = 1.5;
+                ctx.moveTo(this.x, this.y);
+                // Наклон капли рассчитывается автоматически исходя из силы ветра
+                ctx.lineTo(this.x + wind * 2, this.y + this.length);
+                ctx.stroke();
+            }
+        }
+
+        // Инициализация пула капель
+        for (let i = 0; i < maxDrops; i++) {
+            drops.push(new Drop());
+        }
+
+        // Тот самый алгоритм хаотичного изменения ритма и направления ветра
+        function changeWeatherRhythm() {
+            // Ветер случайно меняется от сильного левого (-3) до сильного правого (3)
+            wind = (Math.random() * 6) - 3; 
+            
+            // Скорость течения дождя хаотично падает или разгоняется от 3 до 8
+            globalSpeed = Math.random() * 5 + 3;
+
+            // Капли адаптируют свою индивидуальную скорость под новый ритм
+            drops.forEach(drop => {
+                drop.speed = Math.random() * 4 + globalSpeed;
+            });
+            
+            console.log(`Ритм изменился! Текущий ветер: ${wind.toFixed(2)}, Скорость течения: ${globalSpeed.toFixed(2)}`);
+        }
+
+        // Запускаем хаотичное изменение ветра и скорости ровно каждую минуту
+        setInterval(changeWeatherRhythm, rhythmInterval);
+        // Вызываем один раз при старте, чтобы задать случайный начальный ритм
+        changeWeatherRhythm();
+
+        // Главный цикл анимации
+        function animate() {
+            // Эффект шлейфа (капли красиво размываются, а не просто стираются)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < drops.length; i++) {
+                drops[i].update();
+                drops[i].draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
 </body>
 </html>
