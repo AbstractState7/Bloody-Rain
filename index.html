@@ -107,7 +107,7 @@
             }
         }
 
-        // Оригинальный класс Искры (Spark)
+        // Улучшенный класс Искры (Spark) с яркой реакцией на ветер
         class Spark {
             constructor() {
                 this.reset();
@@ -116,22 +116,24 @@
             reset() {
                 this.x = random(width);
                 this.y = height + random(10, 100);
-                this.size = random(2, 5);
-                this.speedX = random(-1, 1);
-                this.speedY = random(-1.5, -4);
-                this.alpha = random(100, 200);
+                this.size = random(4, 8); // Сделали искры крупнее (было 2-5)
+                this.speedX = random(-1.5, 1.5);
+                this.speedY = random(-2, -5); // Летят чуть быстрее вверх
+                this.alpha = random(150, 255); // Сделали их ярче и насыщеннее
             }
             update() {
                 this.y += this.speedY;
-                this.x += this.speedX + windX * 0.5;
-                this.alpha -= 1.5;
+                // Усилили влияние ветра (теперь они сильно наклоняются вбок вслед за дождем)
+                this.x += this.speedX + windX * 1.2; 
+                this.alpha -= 1.2; // Живут на экране чуть дольше
                 if (this.alpha <= 0 || this.y < -10) {
                     this.reset();
                 }
             }
             display() {
                 noStroke();
-                fill(230, 40, 40, this.alpha); // Огненно-красные искры, летящие вверх
+                // Насыщенный светящийся огненно-красный цвет
+                fill(255, 50, 50, this.alpha); 
                 ellipse(this.x, this.y, this.size);
             }
         }
