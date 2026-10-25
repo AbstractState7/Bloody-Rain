@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bloody Rain Footage</title>
+    <!-- Подключаем оригинальную библиотеку анимации p5.js -->
+    <script src="https://cloudflare.com"></script>
     <style>
-        /* Очищаем страницу и делаем фон полностью чёрным */
         * {
             margin: 0;
             padding: 0;
@@ -15,120 +16,156 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #000;
+            background-color: #0b0202; /* Оригинальный темно-бордовый оттенок фона */
         }
-        /* Растягиваем холст с дождем на абсолютно весь экран */
+        /* Закрепляем холст p5.js на весь экран */
         canvas {
             display: block;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100vw !important;
+            height: 100vh !important;
             z-index: 1;
         }
     </style>
 </head>
 <body>
 
-    <!-- Только холст для анимации, никакого лишнего HTML-текста -->
-    <canvas id="rainCanvas"></canvas>
-
     <script>
-        const canvas = document.getElementById('rainCanvas');
-        const ctx = canvas.getContext('2d');
+        // Восстановленные оригинальные массивы элементов
+        let drops = [];
+        let sparks = [];
+        let smogParticles = [];
+        
+        // Автоматические параметры окружающей среды
+        let windX = 0; 
+        let targetWindX = 0;
+        let globalSpeedMultiplier = 1.2;
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            
+            // Инициализация оригинального количества элементов
+            for (let i = 0; i < 120; i++) drops.push(new Drop());
+            for (let i = 0; i < 40; i++) sparks.push(new Spark());
+            for (let i = 0; i < 15; i++) smogParticles.push(new Smog());
+
+            // Запуск автоматического изменения ритма погоды каждую минуту (60000 мс)
+            setInterval(updateWeatherRhythm, 60000);
+            updateWeatherRhythm(); // Задаем начальный хаотичный ритм
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
-        // Базовые настройки капель (вытащены из вашего оригинального JS)
-        const drops = [];
-        const maxDrops = 150; 
+        function draw() {
+            // Оригинальный шлейф размытия фона
+            background(11, 2, 2, 40);
 
-        // Переменные динамики окружающей среды
-        let wind = 1.5;         // Скорость ветра по умолчанию
-        let globalSpeed = 4;    // Базовая скорость течения дождя
-        let rhythmInterval = 60000; // Интервал хаотичного изменения ритма (1 минута)
+            // Плавное изменение направления ветра
+            windX = lerp(windX, targetWindX, 0.02);
 
+            // Отрисовка всех слоев спецэффектов сайта
+            smogParticles.forEach(p => { p.update(); p.display(); });
+            drops.forEach(d => { d.update(); d.display(); });
+            sparks.forEach(s => { s.update(); s.display(); });
+        }
+
+        // Автоматический алгоритм хаотичного изменения ритма
+        function updateWeatherRhythm() {
+            // Хаотично меняем силу и сторону ветра (от -2.5 до 2.5)
+            targetWindX = random(-2.5, 2.5);
+            
+            // Хаотично меняем скорость течения дождя
+            globalSpeedMultiplier = random(0.8, 2.0);
+        }
+
+        // Оригинальный класс Капли (Drop)
         class Drop {
             constructor() {
                 this.reset();
-                this.y = Math.random() * canvas.height; // Случайный старт по высоте при первой загрузке
+                this.y = random(height);
             }
-
             reset() {
-                this.x = Math.random() * (canvas.width + 200) - 100;
-                this.y = -20;
-                this.length = Math.random() * 20 + 15;
-                this.speed = Math.random() * 4 + globalSpeed;
-                this.opacity = Math.random() * 0.4 + 0.2;
+                this.x = random(-100, width + 100);
+                this.y = random(-100, -10);
+                this.z = random(0, 20);
+                this.len = map(this.z, 0, 20, 10, 25);
+                this.yspeed = map(this.z, 0, 20, 4, 9) * globalSpeedMultiplier;
+                this.opacity = map(this.z, 0, 20, 30, 120);
+                this.weight = map(this.z, 0, 20, 1, 2.5);
             }
-
             update() {
-                this.y += this.speed;
-                this.x += wind; // Ветер смещает каплю по горизонтали
-
-                if (this.y > canvas.height) {
+                this.y += this.yspeed;
+                this.x += windX * map(this.z, 0, 20, 0.5, 1.5);
+                if (this.y > height || this.x < -100 || this.x > width + 100) {
                     this.reset();
                 }
             }
-
-            draw() {
-                ctx.beginPath();
-                ctx.strokeStyle = `rgba(255, 0, 0, ${this.opacity})`; // Фирменный кроваво-красный цвет
-                ctx.lineWidth = 1.5;
-                ctx.moveTo(this.x, this.y);
-                // Наклон капли рассчитывается автоматически исходя из силы ветра
-                ctx.lineTo(this.x + wind * 2, this.y + this.length);
-                ctx.stroke();
+            display() {
+                stroke(180, 20, 20, this.opacity); // Кроваво-красные капли
+                strokeWeight(this.weight);
+                line(this.x, this.y, this.x + windX * 2, this.y + this.len);
             }
         }
 
-        // Инициализация пула капель
-        for (let i = 0; i < maxDrops; i++) {
-            drops.push(new Drop());
-        }
-
-        // Тот самый алгоритм хаотичного изменения ритма и направления ветра
-        function changeWeatherRhythm() {
-            // Ветер случайно меняется от сильного левого (-3) до сильного правого (3)
-            wind = (Math.random() * 6) - 3; 
-            
-            // Скорость течения дождя хаотично падает или разгоняется от 3 до 8
-            globalSpeed = Math.random() * 5 + 3;
-
-            // Капли адаптируют свою индивидуальную скорость под новый ритм
-            drops.forEach(drop => {
-                drop.speed = Math.random() * 4 + globalSpeed;
-            });
-            
-            console.log(`Ритм изменился! Текущий ветер: ${wind.toFixed(2)}, Скорость течения: ${globalSpeed.toFixed(2)}`);
-        }
-
-        // Запускаем хаотичное изменение ветра и скорости ровно каждую минуту
-        setInterval(changeWeatherRhythm, rhythmInterval);
-        // Вызываем один раз при старте, чтобы задать случайный начальный ритм
-        changeWeatherRhythm();
-
-        // Главный цикл анимации
-        function animate() {
-            // Эффект шлейфа (капли красиво размываются, а не просто стираются)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            for (let i = 0; i < drops.length; i++) {
-                drops[i].update();
-                drops[i].draw();
+        // Оригинальный класс Искры (Spark)
+        class Spark {
+            constructor() {
+                this.reset();
+                this.y = random(height);
             }
-
-            requestAnimationFrame(animate);
+            reset() {
+                this.x = random(width);
+                this.y = height + random(10, 100);
+                this.size = random(2, 5);
+                this.speedX = random(-1, 1);
+                this.speedY = random(-1.5, -4);
+                this.alpha = random(100, 200);
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + windX * 0.5;
+                this.alpha -= 1.5;
+                if (this.alpha <= 0 || this.y < -10) {
+                    this.reset();
+                }
+            }
+            display() {
+                noStroke();
+                fill(230, 40, 40, this.alpha); // Огненно-красные искры, летящие вверх
+                ellipse(this.x, this.y, this.size);
+            }
         }
 
-        animate();
+        // Оригинальный класс Кровавого Тумана (Smog)
+        class Smog {
+            constructor() {
+                this.reset();
+                this.x = random(width);
+                this.y = random(height);
+            }
+            reset() {
+                this.x = windX > 0 ? random(-200, 0) : random(width, width + 200);
+                this.y = random(height);
+                this.size = random(150, 350);
+                this.speedX = random(0.2, 0.8) * (windX >= 0 ? 1 : -1);
+                this.alpha = random(5, 18);
+            }
+            update() {
+                this.x += this.speedX + windX * 0.3;
+                if (this.x > width + 200 || this.x < -200) {
+                    this.reset();
+                }
+            }
+            display() {
+                noStroke();
+                fill(139, 0, 0, this.alpha); // Объёмные частицы тумана
+                ellipse(this.x, this.y, this.size);
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
     </script>
 </body>
 </html>
